@@ -7,8 +7,8 @@ import sqlite3
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--type", type=str, default="Armor,Back,Weapon",\
-    help="The main item type you're looking for. If you're not going to search also by subtype, then this can be a comma-delimited string listing multiple types. See the API documentation for the list of valid types.")
+parser.add_argument("--type", type=str, default="Armor,Back,Weapon,MiniPet",\
+    help="The main item type you're looking for. If you're not going to search also by subtype, then this can be a comma-delimited string listing multiple types. Supported types are 'Armor', 'Back', 'Weapon', and 'MiniPet'.")
 # parser.add_argument("--subtype", type=str, default=None,\
 #     help="The subtype of items you are looking for. Only works if a single main type was given. See the API documentation for the list of valid subtypes.")
 parser.add_argument("--rarity", type=str, default=None,\
@@ -60,20 +60,33 @@ if (args.maxbuy is not None):
     subquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
         SELECT id, MIN(buy) AS minbuy
         FROM joined  
+        WHERE type != "MiniPet"
         GROUP BY skin 
-    ) t on t.id = joined.id and joined.buy = t.minbuy
-    ORDER BY buy, type, subtype, name'''
+    ) t on t.id = joined.id and joined.buy = t.minbuy'''
 elif (args.maxsell is not None):
     subquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
         SELECT id, MIN(sell) AS minsell
         FROM joined  
+        WHERE type != "MiniPet"
         GROUP BY skin 
-    ) t on t.id = joined.id and joined.sell = t.minsell
-    ORDER BY sell, type, subtype, name'''
+    ) t on t.id = joined.id and joined.sell = t.minsell'''
 c.execute(subquery)
 recs = c.fetchall()
+
+# Add minis
+miniquery = None
+if (args.maxbuy is not None):
+    miniquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined 
+    WHERE type = "MiniPet"'''
+elif (args.maxsell is not None):
+    miniquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined 
+    WHERE type = "MiniPet"'''
+c.execute(miniquery)
+minis = c.fetchall()
+
 db.commit()
 db.close()
+recs = recs + minis
 print("{} records found matching criteria".format(len(recs)))
 
 def tuple2dict(tup):
@@ -94,6 +107,10 @@ def tuple2dict(tup):
     return node
 
 recs = [tuple2dict(x) for x in recs]
+if (args.maxbuy is not None):
+    recs = sorted(recs, key=lambda x: x["buy"])
+elif (args.maxsell is not None):
+    recs = sorted(recs, key=lambda x: x["sell"])
 
 env = Environment(
     loader=FileSystemLoader('./templates'),

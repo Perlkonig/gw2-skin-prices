@@ -19,6 +19,11 @@ c = db.cursor()
 c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type IN ("Weapon", "Back", "Armor")) AND (skin IS NOT NULL) AND (skin NOT IN (SELECT skinid FROM unlocked)) AND (nosell = FALSE)')
 db.commit()
 
+# Now add minis into the mix
+c = db.cursor()
+c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type = "MiniPet") AND (id NOT IN (SELECT miniid FROM minis)) AND (nosell = FALSE)')
+db.commit()
+
 # Get list of calculated ids
 c = db.cursor()
 c.execute("SELECT id FROM prices")
