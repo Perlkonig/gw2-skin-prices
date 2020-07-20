@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Skinner Report</title>
+</head>
+<body>
+    <h1>Skinner Report</h1>
+    <table>
+        <thead>
+            <th>Name</th>
+            <th>Chat link</th>
+            <th>Type</th>
+            <th>Rarity</th>
+            <th>Buy/Sell</th>
+        </thead>
+        <tbody>
+        {% for rec in recs %}
+            <tr>
+                <td>{{ rec["name"] }}</td>
+                <td>{{ rec["chat"] }}</td>
+                <td>{{ rec["type"] }} / {{ rec["subtype"] }}</td>
+                <td>{{ rec["rarity"] }}</td>
+                <td>{{ rec["buy"] }} / {{ rec["sell"] }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
