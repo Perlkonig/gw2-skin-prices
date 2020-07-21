@@ -11,6 +11,8 @@ parser.add_argument("--type", type=str, default="Armor,Back,Weapon,MiniPet",\
     help="The main item type you're looking for. If you're not going to search also by subtype, then this can be a comma-delimited string listing multiple types. Supported types are 'Armor', 'Back', 'Weapon', and 'MiniPet'.")
 # parser.add_argument("--subtype", type=str, default=None,\
 #     help="The subtype of items you are looking for. Only works if a single main type was given. See the API documentation for the list of valid subtypes.")
+parser.add_argument("--pricestyle", type=str, default="rounded",\
+    help="Determines how you want prices to be displayed in the final report. 'raw' gives all prices in copper. 'decimal' gives the prices in gold with silver and copper as decimals. 'rounded' rounds everything to the nearest gold.")
 parser.add_argument("--rarity", type=str, default=None,\
     help="The rarity of items you are looking for. An empty string searches for all rarities. You can provide a comma-delimited string of multiple rarities if you like. See the API documentation for the list of valid rarities.")
 group = parser.add_mutually_exclusive_group()
@@ -63,7 +65,8 @@ if (args.maxbuy is not None):
         WHERE type != "MiniPet"
         GROUP BY skin 
     ) t on t.id = joined.id and joined.buy = t.minbuy'''
-elif (args.maxsell is not None):
+# elif (args.maxsell is not None):
+else:
     subquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
         SELECT id, MIN(sell) AS minsell
         FROM joined  
@@ -74,13 +77,7 @@ c.execute(subquery)
 recs = c.fetchall()
 
 # Add minis
-miniquery = None
-if (args.maxbuy is not None):
-    miniquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined 
-    WHERE type = "MiniPet"'''
-elif (args.maxsell is not None):
-    miniquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined 
-    WHERE type = "MiniPet"'''
+miniquery = 'SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined WHERE type = "MiniPet"'
 c.execute(miniquery)
 minis = c.fetchall()
 
@@ -96,20 +93,30 @@ def tuple2dict(tup):
     # See initial `querystr` variable for order
     node = dict()
     node["id"] = tup[0]
-    node["buy"] = tup[1]
-    node["sell"] = tup[2]
     node["name"] = tup[3]
     node["type"] = tup[4]
     node["subtype"] = tup[5]
     node["rarity"] = tup[6]
     node["skin"] = tup[7]
     node["chat"] = tup[8]
+
+    if (args.pricestyle == 'decimal'):
+        node["buy"] = tup[1] / 10000
+        node["sell"] = tup[2] / 10000
+    elif (args.pricestyle == 'rounded'):
+        node["buy"] = round(tup[1] / 10000)
+        node["sell"] = round(tup[2] / 10000)
+    else:
+        node["buy"] = tup[1]
+        node["sell"] = tup[2]
+
     return node
 
 recs = [tuple2dict(x) for x in recs]
 if (args.maxbuy is not None):
     recs = sorted(recs, key=lambda x: x["buy"])
-elif (args.maxsell is not None):
+# elif (args.maxsell is not None):
+else:
     recs = sorted(recs, key=lambda x: x["sell"])
 
 env = Environment(
