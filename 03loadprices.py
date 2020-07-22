@@ -14,6 +14,11 @@ c.execute("CREATE INDEX idx_buy ON prices (buy)")
 c.execute("CREATE INDEX idx_sell ON prices (sell)")
 db.commit()
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--chunksize", type=int, default=100,\
+    help="The maximum number of records to fetch in any given request.")
+args = parser.parse_args()
+
 # Generate table of Weapon, Armor, and Back items whose skins are still locked
 c = db.cursor()
 c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type IN ("Weapon", "Back", "Armor")) AND (nosell = FALSE) AND (skin IS NOT NULL) AND (skin NOT IN (SELECT skinid FROM unlocked)) AND (skin NOT IN (SELECT DISTINCT items.skin FROM buys JOIN items ON (buys.itemid = items.id) WHERE items.skin IS NOT NULL))')
@@ -34,7 +39,7 @@ ids = [x[0] for x in ids]
 baseurl = "https://api.guildwars2.com/v2/commerce/prices"
 
 # chunk list so url length does not exceed 2k chars
-numchunks = int((len(ids) / 100) + 1)
+numchunks = int((len(ids) / args.chunksize) + 1)
 # numchunks = len(ids)
 chunks = numpy.array_split(ids, numchunks)
 

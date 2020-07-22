@@ -1,7 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="utf-8"/>
     <title>Skinner Report</title>
+    <style type="text/css">
+        table {
+            border-collapse: separate;
+        }
+        th {
+            text-align: left;
+        }
+        tfoot {
+            padding-top: 1em;
+        }
+    </style>
 </head>
 <body>
     <h1>Skinner Report</h1>
@@ -24,6 +36,12 @@
             </tr>
         {% endfor %}
         </tbody>
+        <tfoot>
+            <tr>
+                <th colspan="4">Total</th>
+                <th>{{ totalbuy }} / {{ totalsell }}</th>
+            </tr>
+        </tfoot>
     </table>
 </body>
 </html>

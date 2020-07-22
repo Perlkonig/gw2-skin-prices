@@ -86,6 +86,15 @@ db.close()
 recs = recs + minis
 print("{} records found matching criteria".format(len(recs)))
 
+totalbuy = sum([x[1] for x in recs])
+totalsell = sum([x[2] for x in recs])
+if (args.pricestyle == 'decimal'):
+    totalbuy = totalbuy / 10000
+    totalsell = totalsell / 10000
+elif (args.pricestyle == 'rounded'):
+    totalbuy = round(totalbuy / 10000)
+    totalsell = round(totalsell / 10000)
+
 def tuple2dict(tup):
     if (len(tup) != 9):
         print(tup)
@@ -124,6 +133,6 @@ env = Environment(
     autoescape=select_autoescape(['html', 'xml'])
 )
 template = env.get_template('report.html')
-html = template.render(recs=recs)
+html = template.render(recs=recs, totalbuy=totalbuy, totalsell=totalsell)
 with open("report.html", "w") as f: 
     f.write(html) 
