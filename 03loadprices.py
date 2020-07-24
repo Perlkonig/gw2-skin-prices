@@ -21,12 +21,12 @@ args = parser.parse_args()
 
 # Generate table of Weapon, Armor, and Back items whose skins are still locked
 c = db.cursor()
-c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type IN ("Weapon", "Back", "Armor")) AND (nosell = FALSE) AND (skin IS NOT NULL) AND (skin NOT IN (SELECT skinid FROM unlocked)) AND (skin NOT IN (SELECT DISTINCT items.skin FROM buys JOIN items ON (buys.itemid = items.id) WHERE items.skin IS NOT NULL))')
+c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type IN ("Weapon", "Back", "Armor")) AND (skin IS NOT NULL) AND (skin NOT IN (SELECT skinid FROM unlocked)) AND (skin NOT IN (SELECT DISTINCT items.skin FROM buys JOIN items ON (buys.itemid = items.id) WHERE items.skin IS NOT NULL))')
 db.commit()
 
 # Now add minis into the mix
 c = db.cursor()
-c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type = "MiniPet") AND (nosell = FALSE) AND (id NOT IN (SELECT miniid FROM minis)) AND (id NOT IN (SELECT itemid FROM buys))')
+c.execute('INSERT INTO prices(id) SELECT id FROM items WHERE (type = "MiniPet") AND (id NOT IN (SELECT miniid FROM minis)) AND (id NOT IN (SELECT itemid FROM buys))')
 db.commit()
 
 # Get list of calculated ids

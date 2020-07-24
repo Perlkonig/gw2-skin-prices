@@ -12,12 +12,12 @@ db = sqlite3.connect('skinner.db')
 c = db.cursor()
 c.execute('''DROP TABLE IF EXISTS items''')
 c.execute('''CREATE TABLE items 
-             (id INTEGER PRIMARY KEY, name STRING, type STRING, subtype STRING, rarity STRING, skin INTEGER, chat STRING, nosell BOOL)''')
+             (id INTEGER PRIMARY KEY, name STRING, type STRING, subtype STRING, rarity STRING, skin INTEGER, chat STRING, notrade BOOL)''')
 c.execute("CREATE INDEX idx_type ON items (type)")             
 c.execute("CREATE INDEX idx_rarity ON items (rarity)")
 c.execute("CREATE INDEX idx_subtype ON items (subtype)")
 c.execute("CREATE INDEX idx_types ON items (type, subtype)")
-c.execute("CREATE INDEX idx_nosell ON items (nosell)")
+c.execute("CREATE INDEX idx_notrade ON items (notrade)")
 db.commit()
 
 baseurl = "https://api.guildwars2.com/v2/items"
@@ -57,10 +57,10 @@ for chunk in chunks:
         thissubtype = None
         if ( ("details" in r) and ("type" in r["details"]) ):
             thissubtype = r["details"]["type"]
-        thisnosell = False
-        if ("NoSell" in r["flags"]):
-            thisnosell = True
-        c.execute("INSERT INTO items (id, name, type, subtype, rarity, skin, chat, nosell) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (thisid, thisname, thistype, thissubtype,  thisrarity, thisskin, thischat, thisnosell))
+        thisnotrade = False
+        if ( ("AccountBound" in r["flags"]) or ("SoulbindOnAcquire" in r["flags"]) ):
+            thisnotrade = True
+        c.execute("INSERT INTO items (id, name, type, subtype, rarity, skin, chat, notrade) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (thisid, thisname, thistype, thissubtype, thisrarity, thisskin, thischat, thisnotrade))
 db.commit()
 
 db.close()
