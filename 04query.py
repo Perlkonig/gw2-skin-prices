@@ -59,7 +59,7 @@ c = db.cursor()
 c.execute(querystr)
 subquery = None
 if (args.maxbuy is not None):
-    subquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
+    subquery = '''CREATE TEMPORARY TABLE merged AS SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
         SELECT id, MIN(buy) AS minbuy
         FROM joined  
         WHERE type != "MiniPet"
@@ -67,7 +67,7 @@ if (args.maxbuy is not None):
     ) t on t.id = joined.id and joined.buy = t.minbuy'''
 # elif (args.maxsell is not None):
 else:
-    subquery = '''SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
+    subquery = '''CREATE TEMPORARY TABLE merged AS SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined JOIN (
         SELECT id, MIN(sell) AS minsell
         FROM joined  
         WHERE type != "MiniPet"
@@ -77,13 +77,19 @@ c.execute(subquery)
 recs = c.fetchall()
 
 # Add minis
-miniquery = 'SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined WHERE type = "MiniPet"'
+miniquery = 'INSERT INTO merged SELECT joined.id, buy, sell, name, type, subtype, rarity, skin, chat FROM joined WHERE type = "MiniPet"'
 c.execute(miniquery)
 minis = c.fetchall()
 
+# Now extract the full list, sorted
+sortquery = "SELECT * FROM merged ORDER BY sell ASC"
+if (args.maxbuy is not None):
+    sortquery = "SELECT * FROM merged ORDER BY buy ASC"
+c.execute(sortquery)
+recs = c.fetchall()
+
 db.commit()
 db.close()
-recs = recs + minis
 print("{} records found matching criteria".format(len(recs)))
 
 totalbuy = sum([x[1] for x in recs])
@@ -122,11 +128,6 @@ def tuple2dict(tup):
     return node
 
 recs = [tuple2dict(x) for x in recs]
-if (args.maxbuy is not None):
-    recs = sorted(recs, key=lambda x: x["buy"])
-# elif (args.maxsell is not None):
-else:
-    recs = sorted(recs, key=lambda x: x["sell"])
 
 env = Environment(
     loader=FileSystemLoader('./templates'),
